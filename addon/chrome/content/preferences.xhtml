@@ -1,0 +1,74 @@
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      xmlns:html="http://www.w3.org/1999/xhtml"
+      id="scholar-assistant-preferences"
+      onload="ScholarAssistantPreferences.init()">
+  <groupbox>
+    <label><html:h2>AI provider</html:h2></label>
+    <html:p id="scholar-assistant-privacy-note">Choose local Ollama or Google Gemini. Google mode sends extracted paper text to Google's Gemini API.</html:p>
+    <grid>
+      <columns><column/><column flex="1"/></columns>
+      <rows>
+        <row align="center">
+          <label value="Provider" control="scholar-assistant-provider"/>
+          <menulist id="scholar-assistant-provider" preference="extensions.zotero.scholarAssistant.provider" oncommand="ScholarAssistantPreferences.updateProvider(true)">
+            <menupopup>
+              <menuitem label="Ollama (local)" value="ollama"/>
+              <menuitem label="Google Gemini" value="google"/>
+            </menupopup>
+          </menulist>
+        </row>
+        <row id="scholar-assistant-ollama-endpoint-row" align="center">
+          <label value="Endpoint" control="scholar-assistant-endpoint"/>
+          <html:input id="scholar-assistant-endpoint" type="url" preference="extensions.zotero.scholarAssistant.ollamaEndpoint"/>
+        </row>
+        <row id="scholar-assistant-ollama-model-row" align="center">
+          <label value="Ollama model" control="scholar-assistant-model"/>
+          <html:input id="scholar-assistant-model" type="text" preference="extensions.zotero.scholarAssistant.ollamaModel" placeholder="gemma3:latest"/>
+        </row>
+        <row id="scholar-assistant-google-model-row" align="center">
+          <label value="Gemini model" control="scholar-assistant-google-model"/>
+          <html:input id="scholar-assistant-google-model" type="text" preference="extensions.zotero.scholarAssistant.googleModel" placeholder="gemini-3.6-flash"/>
+        </row>
+        <row id="scholar-assistant-google-key-row" align="center">
+          <label value="Google AI API key" control="scholar-assistant-google-key"/>
+          <html:input id="scholar-assistant-google-key" type="password" autocomplete="off" preference="extensions.zotero.scholarAssistant.googleApiKey" placeholder="AIza…"/>
+        </row>
+        <row id="scholar-assistant-google-thinking-row" align="center">
+          <label value="Gemini reasoning" control="scholar-assistant-google-thinking"/>
+          <checkbox id="scholar-assistant-google-thinking" label="Enable thinking (slower)" preference="extensions.zotero.scholarAssistant.googleThinking"/>
+        </row>
+        <row align="center">
+          <label value="Output language" control="scholar-assistant-language"/>
+          <html:input id="scholar-assistant-language" type="text" preference="extensions.zotero.scholarAssistant.outputLanguage"/>
+        </row>
+        <row align="center">
+          <label value="Max output tokens" control="scholar-assistant-max-tokens"/>
+          <html:input id="scholar-assistant-max-tokens" type="number" min="512" max="32768" preference="extensions.zotero.scholarAssistant.maxTokens"/>
+        </row>
+        <row align="center">
+          <label value="Request timeout (minutes)" control="scholar-assistant-timeout"/>
+          <html:input id="scholar-assistant-timeout" type="number" min="5" max="120" preference="extensions.zotero.scholarAssistant.timeoutMinutes"/>
+        </row>
+        <row align="center">
+          <label value="Chunk threshold (characters)" control="scholar-assistant-context"/>
+          <html:input id="scholar-assistant-context" type="number" min="8000" preference="extensions.zotero.scholarAssistant.contextChars"/>
+        </row>
+      </rows>
+    </grid>
+    <html:div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+      <html:button id="scholar-assistant-test" type="button" onclick="ScholarAssistantPreferences.testConnection()">Test AI connection</html:button>
+      <html:span id="scholar-assistant-test-result" role="status" style="white-space: normal;"></html:span>
+    </html:div>
+  </groupbox>
+  <groupbox>
+    <label><html:h2>PDF retrieval</html:h2></label>
+    <checkbox label="arXiv" preference="extensions.zotero.scholarAssistant.enableArxiv"/>
+    <checkbox label="Unpaywall (open access only)" preference="extensions.zotero.scholarAssistant.enableUnpaywall"/>
+    <checkbox label="Semantic Scholar open-access PDF links" preference="extensions.zotero.scholarAssistant.enableSemanticScholar"/>
+    <hbox align="center">
+      <label value="Unpaywall email"/>
+      <html:input type="email" preference="extensions.zotero.scholarAssistant.unpaywallEmail" placeholder="you@example.org"/>
+    </hbox>
+    <checkbox label="Direct PDF URLs from CSV" preference="extensions.zotero.scholarAssistant.enableDirectURL"/>
+  </groupbox>
+</vbox>

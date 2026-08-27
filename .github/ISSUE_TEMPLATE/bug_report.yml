@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible problem with Zotero Scholar Assistant
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include API keys, private paper text, Zotero databases, or other sensitive information.
+  - type: input
+    id: version
+    attributes:
+      label: Add-on version
+      placeholder: 1.3.0
+    validations:
+      required: true
+  - type: input
+    id: zotero
+    attributes:
+      label: Zotero version
+      placeholder: 10.0.1
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: AI provider
+      options:
+        - Ollama
+        - Google Gemini
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Explain the expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open…
+        2. Select…
+        3. Observe…
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized error or log output
+      description: Remove credentials, private content, and personal paths before pasting logs.
+      render: text

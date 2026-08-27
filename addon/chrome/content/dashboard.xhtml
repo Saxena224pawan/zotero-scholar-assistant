@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://zotero/skin/zotero.css" type="text/css"?>
+<?xml-stylesheet href="chrome://scholar-assistant/content/dashboard.css" type="text/css"?>
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        id="scholar-assistant-dashboard-window"
+        title="Zotero Scholar Assistant"
+        orient="vertical"
+        style="min-width: 760px; min-height: 560px;"
+        onload="ScholarAssistantDashboard.init()">
+  <script type="application/javascript" src="chrome://scholar-assistant/content/dashboard.js"></script>
+  <vbox flex="1" class="scholar-assistant-shell">
+    <label class="scholar-assistant-title" value="Zotero Scholar Assistant"/>
+    <description>Import papers, retrieve open PDFs, and analyze them with your selected AI provider.</description>
+    <hbox align="center" class="scholar-assistant-row">
+      <button id="scholar-assistant-select" label="Select CSV File…" oncommand="ScholarAssistantDashboard.chooseCSV()"/>
+      <html:input id="scholar-assistant-file" class="scholar-assistant-grow" type="text" readonly="readonly" placeholder="No CSV selected"/>
+      <button label="Clear" oncommand="ScholarAssistantDashboard.clear()"/>
+    </hbox>
+    <hbox align="center" class="scholar-assistant-row">
+      <label value="Collection name" control="scholar-assistant-collection"/>
+      <html:input id="scholar-assistant-collection" class="scholar-assistant-grow" type="text"/>
+    </hbox>
+    <html:div class="scholar-assistant-table-wrap">
+      <html:table>
+        <html:thead><html:tr>
+          <html:th>#</html:th><html:th>Paper</html:th><html:th>Metadata</html:th><html:th>PDF</html:th><html:th>Text</html:th><html:th>AI highlights</html:th><html:th>AI notes</html:th><html:th>AI quiz</html:th><html:th>Save highlights</html:th><html:th>Save note</html:th><html:th>Save quiz</html:th><html:th>Current status</html:th>
+        </html:tr></html:thead>
+        <html:tbody id="scholar-assistant-paper-rows"/>
+      </html:table>
+    </html:div>
+    <html:progress id="scholar-assistant-progress" max="1" value="0"/>
+    <html:div class="scholar-assistant-status-strip">
+      <html:strong id="scholar-assistant-overall-status">Ready</html:strong>
+      <html:span id="scholar-assistant-current-stage">No import is running.</html:span>
+    </html:div>
+    <hbox align="center" class="scholar-assistant-row">
+      <label id="scholar-assistant-progress-label" value="Select a CSV to begin." flex="1"/>
+      <label id="scholar-assistant-model" value="AI provider"/>
+      <button label="Test AI" oncommand="ScholarAssistantDashboard.testOllama()"/>
+    </hbox>
+    <hbox pack="end" class="scholar-assistant-actions">
+      <button id="scholar-assistant-start" label="Start Processing" disabled="true" oncommand="ScholarAssistantDashboard.start()"/>
+      <button id="scholar-assistant-pause" label="Pause" disabled="true" oncommand="ScholarAssistantDashboard.togglePause()"/>
+      <button id="scholar-assistant-stop" label="Stop" disabled="true" oncommand="ScholarAssistantDashboard.stop()"/>
+      <button label="Close" oncommand="window.close()"/>
+    </hbox>
+  </vbox>
+</window>

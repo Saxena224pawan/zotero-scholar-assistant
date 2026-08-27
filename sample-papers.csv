@@ -1,0 +1,4 @@
+title,doi,arxiv_id,authors,year,url,notes
+"Attention Is All You Need","10.48550/arXiv.1706.03762","1706.03762","Vaswani et al.",2017,"https://arxiv.org/abs/1706.03762",""
+"BERT: Pre-training of Deep Bidirectional Transformers","10.18653/v1/N19-1423","1810.04805","Devlin et al.",2019,"https://arxiv.org/abs/1810.04805",""
+"Language Models are Few-Shot Learners","","2005.14165","Brown et al.",2020,"https://arxiv.org/abs/2005.14165","GPT-3 paper"

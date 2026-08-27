@@ -1,0 +1,17 @@
+pref("extensions.zotero.scholarAssistant.provider", "ollama");
+pref("extensions.zotero.scholarAssistant.ollamaEndpoint", "http://127.0.0.1:11434");
+pref("extensions.zotero.scholarAssistant.ollamaModel", "gemma3:latest");
+pref("extensions.zotero.scholarAssistant.googleModel", "gemini-3.6-flash");
+pref("extensions.zotero.scholarAssistant.googleApiKey", "");
+pref("extensions.zotero.scholarAssistant.googleThinking", false);
+pref("extensions.zotero.scholarAssistant.maxTokens", 2048);
+pref("extensions.zotero.scholarAssistant.contextChars", 48000);
+pref("extensions.zotero.scholarAssistant.temperature", "0.2");
+pref("extensions.zotero.scholarAssistant.outputLanguage", "English");
+pref("extensions.zotero.scholarAssistant.timeoutMs", 600000);
+pref("extensions.zotero.scholarAssistant.timeoutMinutes", 30);
+pref("extensions.zotero.scholarAssistant.unpaywallEmail", "");
+pref("extensions.zotero.scholarAssistant.enableArxiv", true);
+pref("extensions.zotero.scholarAssistant.enableUnpaywall", true);
+pref("extensions.zotero.scholarAssistant.enableSemanticScholar", true);
+pref("extensions.zotero.scholarAssistant.enableDirectURL", true);

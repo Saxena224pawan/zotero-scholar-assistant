@@ -1,0 +1,45 @@
+# Dependencies and generated packages
+node_modules/
+build/
+dist/
+*.xpi
+.scaffold/
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+*.local
+secrets/
+credentials/
+*api-key*
+*apikey*
+
+# Zotero user data must never be committed
+zotero-profile/
+zotero-storage/
+profile/
+storage/
+zotero.sqlite*
+prefs.local.js
+
+# Temporary and diagnostic output
+tmp/
+temp/
+coverage/
+*.log
+*.debug
+debug-output.txt
+npm-debug.log*
+
+# Editors and operating systems
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
