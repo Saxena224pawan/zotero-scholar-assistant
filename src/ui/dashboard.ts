@@ -3,6 +3,7 @@ import { createLLMClient } from "../llm/client";
 import { parseCSV } from "../pipeline/csvParser";
 import { PipelineOrchestrator } from "../pipeline/orchestrator";
 import { getLLMConfig } from "../utils/prefs";
+import { logger } from "../utils/logger";
 
 export class DashboardController {
   private dialog: Window | null = null;
@@ -62,7 +63,13 @@ export class DashboardController {
   }
 
   private notify(progress: PipelineProgress): void {
-    const callback = (this.dialog as any)?.ScholarAssistantDashboard?.renderProgress;
-    if (typeof callback === "function") callback(progress);
+    const dashboard = (this.dialog as any)?.ScholarAssistantDashboard;
+    const callback = dashboard?.renderProgress;
+    if (typeof callback !== "function") return;
+    try {
+      callback.call(dashboard, progress);
+    } catch (error) {
+      logger.error("Could not render Scholar Assistant dashboard progress", error);
+    }
   }
 }

@@ -2,6 +2,15 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.1] - 2026-08-29
+
+### Fixed
+
+- Bound the live progress renderer to the dashboard object so stage rendering no longer throws.
+- Isolated dashboard and other progress-listener errors from the import pipeline.
+- Added a persistent failure-details panel with the paper row, exact failed stage, and full error message.
+- Added the exact failed stage to the final import summary dialog.
+
 ## [1.3.0] - 2026-08-27
 
 ### Added

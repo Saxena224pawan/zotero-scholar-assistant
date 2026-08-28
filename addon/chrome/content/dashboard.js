@@ -95,13 +95,15 @@ var ScholarAssistantDashboard = {
     ScholarAssistantDashboard.jobs = progress.jobs;
     ScholarAssistantDashboard.paused = progress.paused;
     ScholarAssistantDashboard.renderPapers();
+    ScholarAssistantDashboard.renderFailures(progress.jobs);
     const completed = progress.done + progress.failed;
     const active = progress.jobs.find((job) => !["pending", "done", "failed", "stopped"].includes(job.status));
     const bar = document.getElementById("scholar-assistant-progress");
-    const totalSteps = Math.max(progress.total * this.steps.length, 1);
+    const steps = ScholarAssistantDashboard.steps;
+    const totalSteps = Math.max(progress.total * steps.length, 1);
     const completedSteps = progress.jobs.reduce((sum, job) => {
-      if (job.status === "done") return sum + this.steps.length;
-      const currentStep = this.steps.indexOf(job.status === "failed" ? job.failedAt : job.status);
+      if (job.status === "done") return sum + steps.length;
+      const currentStep = steps.indexOf(job.status === "failed" ? job.failedAt : job.status);
       if (currentStep < 0) return sum;
       return sum + currentStep + (job.status === "failed" ? 1 : 0.5);
     }, 0);
@@ -131,7 +133,7 @@ var ScholarAssistantDashboard = {
         td.textContent = value;
         tr.append(td);
       });
-      this.steps.forEach((step) => {
+      ScholarAssistantDashboard.steps.forEach((step) => {
         const td = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
         const state = this.stepState(job.status, step, job.failedAt);
         td.className = `scholar-assistant-step ${state}`;
@@ -147,7 +149,7 @@ var ScholarAssistantDashboard = {
   },
 
   stepState(status, step, failedAt) {
-    const order = this.steps.concat("done");
+    const order = ScholarAssistantDashboard.steps.concat("done");
     if (status === "done") return "complete";
     if (status === "pending" || status === "stopped") return "pending";
     const current = order.indexOf(status === "failed" ? failedAt : status);
@@ -160,6 +162,39 @@ var ScholarAssistantDashboard = {
     if (target < current) return "complete";
     if (target === current) return "active";
     return "pending";
+  },
+
+  renderFailures(jobs) {
+    const panel = document.getElementById("scholar-assistant-failures");
+    const list = document.getElementById("scholar-assistant-failure-list");
+    const failures = jobs.filter((job) => job.status === "failed");
+    panel.hidden = failures.length === 0;
+    list.replaceChildren();
+    failures.forEach((job) => {
+      const entry = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+      entry.className = "scholar-assistant-failure-entry";
+      const heading = document.createElementNS("http://www.w3.org/1999/xhtml", "strong");
+      const paper = job.paper.title || job.paper.doi || job.paper.arxivId || `Row ${job.paper.row}`;
+      heading.textContent = `Row ${job.paper.row} · ${paper} · Failed at ${ScholarAssistantDashboard.stageLabel(job.failedAt)}`;
+      const message = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+      message.textContent = job.message || "Unknown error";
+      entry.append(heading, message);
+      list.append(entry);
+    });
+  },
+
+  stageLabel(stage) {
+    return ({
+      matching: "metadata",
+      fetching: "PDF retrieval",
+      extracting: "PDF text extraction",
+      "ai-highlights": "AI highlight generation",
+      "ai-notes": "AI study-note generation",
+      "ai-quiz": "AI quiz generation",
+      annotating: "saving PDF highlights",
+      notes: "saving the study note",
+      quiz: "saving the quiz",
+    })[stage] || stage || "unknown stage";
   },
 
   setRunning(running) {

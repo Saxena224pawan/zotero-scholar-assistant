@@ -31,6 +31,11 @@ th:last-child, td:last-child { min-width: 180px; max-width: 300px; white-space: 
 .scholar-assistant-step.complete { color: #43a047; }
 .scholar-assistant-step.failed { color: #e05252; }
 .scholar-assistant-status-strip { display: flex; align-items: center; gap: 12px; min-height: 24px; padding: 7px 10px; border: 1px solid var(--fill-quinary, GrayText); border-radius: 6px; background: var(--material-sidepane, Canvas); color: var(--fill-primary, CanvasText); }
+.scholar-assistant-failures { padding: 10px; border: 1px solid #e05252; border-radius: 6px; background: color-mix(in srgb, #e05252 10%, Canvas); color: var(--fill-primary, CanvasText); }
+.scholar-assistant-failures h2 { margin: 0 0 8px; font-size: 15px; color: #e05252; }
+.scholar-assistant-failure-entry { padding: 7px 0; white-space: normal; }
+.scholar-assistant-failure-entry + .scholar-assistant-failure-entry { border-top: 1px solid color-mix(in srgb, #e05252 35%, transparent); }
+.scholar-assistant-failure-entry strong { display: block; margin-bottom: 3px; }
 #scholar-assistant-current-stage { white-space: normal; }
 progress { width: 100%; height: 16px; }
 input { box-sizing: border-box; min-height: 28px; padding: 4px 7px; background-color: Field; color: FieldText; border: 1px solid GrayText; }
@@ -47,6 +52,10 @@ input { box-sizing: border-box; min-height: 28px; padding: 4px 7px; background-c
 
   .scholar-assistant-table-wrap, th {
     background-color: var(--material-sidepane, #292a2d) !important;
+  }
+
+  .scholar-assistant-failures {
+    background: #3a2527 !important;
   }
 
   input {

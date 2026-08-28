@@ -103,7 +103,7 @@ export class Hooks {
       const failures = result?.jobs
         .filter((job) => job.status === "failed")
         .slice(0, 5)
-        .map((job) => `Row ${job.paper.row}: ${job.message || "Unknown error"}`)
+        .map((job) => `Row ${job.paper.row} — failed at ${formatStage(job.failedAt)}:\n${job.message || "Unknown error"}`)
         .join("\n");
       win.alert(
         result
@@ -131,4 +131,19 @@ export class Hooks {
       win.alert(`Scholar Assistant — AI connection test\n\nFAILED\n${error instanceof Error ? error.message : String(error)}`);
     }
   }
+}
+
+function formatStage(stage: string | undefined): string {
+  const labels: Record<string, string> = {
+    matching: "metadata resolution",
+    fetching: "PDF retrieval",
+    extracting: "PDF text extraction",
+    "ai-highlights": "AI highlight generation",
+    "ai-notes": "AI study-note generation",
+    "ai-quiz": "AI quiz generation",
+    annotating: "saving PDF highlights",
+    notes: "saving the study note",
+    quiz: "saving the quiz",
+  };
+  return stage ? labels[stage] ?? stage : "unknown stage";
 }

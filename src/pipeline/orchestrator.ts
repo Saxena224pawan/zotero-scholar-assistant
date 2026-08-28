@@ -157,6 +157,12 @@ export class PipelineOrchestrator {
 
   private emit(): void {
     const progress = this.snapshot();
-    for (const listener of this.listeners) listener(progress);
+    for (const listener of this.listeners) {
+      try {
+        listener(progress);
+      } catch (error) {
+        logger.error("A Scholar Assistant progress listener failed", error);
+      }
+    }
   }
 }
