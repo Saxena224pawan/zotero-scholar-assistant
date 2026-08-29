@@ -8,6 +8,12 @@ Zotero Scholar Assistant is a Zotero 10 add-on for importing lists of research p
 
 The add-on is designed for visible, auditable processing. Its dashboard shows every stage for every paper, and incomplete AI output is rejected instead of being saved as broken JSON or an empty quiz.
 
+## Dashboard
+
+![Zotero Scholar Assistant dashboard processing a multi-paper CSV in Zotero dark mode](docs/images/dashboard-dark-mode.png)
+
+The dashboard tracks metadata resolution, PDF retrieval, text extraction, AI generation, and Zotero output creation separately for every paper.
+
 ## Features
 
 - Imports one or many papers from CSV, TSV, or semicolon-delimited files.
