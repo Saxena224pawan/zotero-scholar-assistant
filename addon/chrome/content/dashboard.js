@@ -257,7 +257,15 @@ var ScholarAssistantDashboard = {
   },
 
   setLabel(value) { document.getElementById("scholar-assistant-progress-label").value = value; },
-  showError(error) { this.setLabel(`Error: ${error?.message || error}`); },
+  showError(error) {
+    const message = error?.message || String(error);
+    this.setLabel(`Error: ${message}`);
+    const overall = document.getElementById("scholar-assistant-overall-status");
+    const stage = document.getElementById("scholar-assistant-current-stage");
+    if (overall) overall.textContent = "Import could not start";
+    if (stage) stage.textContent = message;
+    this.setRunning(false);
+  },
 };
 
 window.ScholarAssistantDashboard = ScholarAssistantDashboard;

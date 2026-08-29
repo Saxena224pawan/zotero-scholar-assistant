@@ -59,6 +59,15 @@ test("a menu-selected CSV is loaded into the dashboard", () => {
   assert.equal(ids.get("scholar-assistant-paper-rows")!.children.length, 2);
 });
 
+test("a preflight failure remains visible in the dashboard", () => {
+  const { dashboard, ids } = loadDashboard();
+  dashboard.showError(new Error("Google Gemini quota is exhausted"));
+
+  assert.equal(ids.get("scholar-assistant-overall-status")!.textContent, "Import could not start");
+  assert.equal(ids.get("scholar-assistant-current-stage")!.textContent, "Google Gemini quota is exhausted");
+  assert.match(ids.get("scholar-assistant-progress-label")!.value, /quota is exhausted/);
+});
+
 test("147-paper progress updates reuse dashboard rows", () => {
   const { dashboard, ids } = loadDashboard();
   const papers = Array.from({ length: 147 }, (_, index) => ({ row: index + 2, title: `Paper ${index + 1}` }));

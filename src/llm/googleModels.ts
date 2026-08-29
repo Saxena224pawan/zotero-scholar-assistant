@@ -1,4 +1,4 @@
-export const DEFAULT_GOOGLE_MODEL = "gemini-3.6-flash";
+export const DEFAULT_GOOGLE_MODEL = "gemini-3.5-flash-lite";
 
 export function normalizeGoogleModel(value: unknown): string {
   const model = String(value || DEFAULT_GOOGLE_MODEL).trim().replace(/^models\//, "");

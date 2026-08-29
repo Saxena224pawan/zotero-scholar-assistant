@@ -31,7 +31,7 @@ The add-on is designed for visible, auditable processing. Its dashboard shows ev
 | Operating systems | Windows, macOS, and Linux supported by Zotero |
 | Node.js for building | 20 or newer |
 | Ollama | A currently supported Ollama installation |
-| Google provider | Google AI Studio API key and access to `gemini-3.6-flash` |
+| Google provider | Google AI Studio API key and access to `gemini-3.5-flash-lite` |
 
 The packaged add-on manifest currently targets Zotero `10.0` through `10.0.*`.
 
@@ -93,7 +93,7 @@ The endpoint may be entered with or without `http://`; the add-on normalizes it 
 
 1. Create an API key in [Google AI Studio](https://aistudio.google.com/apikey).
 2. Select **Google Gemini** in Scholar Assistant settings.
-3. Enter the key and leave the model as `gemini-3.6-flash` unless your account requires another supported model.
+3. Enter the key and leave the model as `gemini-3.5-flash-lite` unless your account requires another supported model.
 4. Leave **Gemini reasoning** disabled for faster processing, or enable it for more reasoning at increased latency.
 5. Click **Test AI connection**.
 
@@ -209,7 +209,7 @@ Scanned PDFs without an indexed text layer must be OCR-processed before analysis
 
 ### Google returns HTTP 404
 
-Use `gemini-3.6-flash`. Older models such as `gemini-2.5-flash` can appear in the model catalogue while being unavailable to newer accounts. The add-on automatically migrates the old 2.5 Flash preference.
+Use `gemini-3.5-flash-lite` for faster, higher-volume imports. The add-on automatically migrates the retired `gemini-2.5-flash` preference. HTTP 429 means the selected model's quota is exhausted; wait for its quota to reset, choose another available Google model, or enable billing in Google AI Studio.
 
 ### Import is slow
 
@@ -225,7 +225,7 @@ Check the dashboard failure message. The add-on intentionally refuses malformed 
 
 ### Dashboard or item panel is empty
 
-Confirm version 1.3.4 or newer is installed and completely restart Zotero after replacing the XPI. Open **Tools → Scholar Assistant → Open Dashboard…**. The dashboard includes a dedicated failure panel showing the CSV row, exact pipeline stage, and complete error. Select either the bibliographic item or its PDF attachment to view the Scholar Assistant item-pane section.
+Confirm version 1.3.5 or newer is installed and completely restart Zotero after replacing the XPI. Open **Tools → Scholar Assistant → Open Dashboard…**. The dashboard includes a dedicated failure panel showing the CSV row, exact pipeline stage, and complete error. Preflight failures such as exhausted Google quota remain visible in the status strip. Select either the bibliographic item or its PDF attachment to view the Scholar Assistant item-pane section.
 
 ## Development
 

@@ -2,9 +2,9 @@ var ScholarAssistantPreferences = {
   init() {
     const key = "extensions.zotero.scholarAssistant.googleModel";
     if (Zotero.Prefs.get(key, true) === "gemini-2.5-flash") {
-      Zotero.Prefs.set(key, "gemini-3.6-flash", true);
+      Zotero.Prefs.set(key, "gemini-3.5-flash-lite", true);
       const input = document.getElementById("scholar-assistant-google-model");
-      if (input) input.value = "gemini-3.6-flash";
+      if (input) input.value = "gemini-3.5-flash-lite";
     }
     this.updateProvider(false);
   },
@@ -46,8 +46,8 @@ var ScholarAssistantPreferences = {
     const googleKeyInput = document.getElementById("scholar-assistant-google-key");
     const endpoint = this.normalizeEndpoint(endpointInput?.value || Zotero.Prefs.get("extensions.zotero.scholarAssistant.ollamaEndpoint", true));
     const model = String(modelInput?.value || Zotero.Prefs.get("extensions.zotero.scholarAssistant.ollamaModel", true) || "gemma3:latest");
-    const requestedGoogleModel = String(googleModelInput?.value || Zotero.Prefs.get("extensions.zotero.scholarAssistant.googleModel", true) || "gemini-3.6-flash").replace(/^models\//, "");
-    const googleModel = requestedGoogleModel === "gemini-2.5-flash" ? "gemini-3.6-flash" : requestedGoogleModel;
+    const requestedGoogleModel = String(googleModelInput?.value || Zotero.Prefs.get("extensions.zotero.scholarAssistant.googleModel", true) || "gemini-3.5-flash-lite").replace(/^models\//, "");
+    const googleModel = requestedGoogleModel === "gemini-2.5-flash" ? "gemini-3.5-flash-lite" : requestedGoogleModel;
     const googleKey = String(googleKeyInput?.value || Zotero.Prefs.get("extensions.zotero.scholarAssistant.googleApiKey", true) || "").trim();
     Zotero.Prefs.set("extensions.zotero.scholarAssistant.provider", provider, true);
     if (endpointInput) endpointInput.value = endpoint;

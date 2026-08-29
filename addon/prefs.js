@@ -1,7 +1,7 @@
 pref("extensions.zotero.scholarAssistant.provider", "ollama");
 pref("extensions.zotero.scholarAssistant.ollamaEndpoint", "http://127.0.0.1:11434");
 pref("extensions.zotero.scholarAssistant.ollamaModel", "gemma3:latest");
-pref("extensions.zotero.scholarAssistant.googleModel", "gemini-3.6-flash");
+pref("extensions.zotero.scholarAssistant.googleModel", "gemini-3.5-flash-lite");
 pref("extensions.zotero.scholarAssistant.googleApiKey", "");
 pref("extensions.zotero.scholarAssistant.googleThinking", false);
 pref("extensions.zotero.scholarAssistant.maxTokens", 2048);

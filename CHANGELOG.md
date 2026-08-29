@@ -2,6 +2,15 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.5] - 2026-08-29
+
+### Fixed
+
+- Changed the default Google model to `gemini-3.5-flash-lite`, which is available to the tested API project while its `gemini-3.6-flash` quota is exhausted.
+- Converted Google HTTP 429 responses into a clear quota message with actionable alternatives.
+- Kept connection and preflight errors visible in the dashboard instead of leaving the selected papers with an apparently idle status.
+- Preserved the selected provider without silently falling back from Google Gemini to Ollama.
+
 ## [1.3.4] - 2026-08-29
 
 ### Fixed

@@ -81,6 +81,12 @@ export class DashboardController {
     return createLLMClient(getLLMConfig()).checkConnection();
   }
 
+  reportError(error: unknown): void {
+    const dashboard = (this.dialog as any)?.ScholarAssistantDashboard;
+    if (typeof dashboard?.showError !== "function") return;
+    dashboard.showError(error);
+  }
+
   private notify(progress: PipelineProgress): void {
     const dashboard = (this.dialog as any)?.ScholarAssistantDashboard;
     const callback = dashboard?.renderProgress;

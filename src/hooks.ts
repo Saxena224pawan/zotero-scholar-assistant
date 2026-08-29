@@ -113,6 +113,7 @@ export class Hooks {
       );
     } catch (error) {
       logger.error("Import failed", error);
+      this.dashboard.reportError(error);
       win.alert(`Scholar Assistant import failed:\n\n${error instanceof Error ? error.message : String(error)}`);
     } finally {
       unsubscribe?.();

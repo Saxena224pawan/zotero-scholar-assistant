@@ -30,23 +30,28 @@ export class GoogleGeminiClient implements LLMClient {
       generationConfig.responseSchema = options.schema ?? analysisSchema;
     }
 
-    const response = await Zotero.HTTP.request(
-      "POST",
-      `${API_ROOT}/models/${encodeURIComponent(model)}:generateContent`,
-      {
-        body: JSON.stringify({
-          ...(systemText ? { systemInstruction: { parts: [{ text: systemText }] } } : {}),
-          contents,
-          generationConfig,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
+    let response: any;
+    try {
+      response = await Zotero.HTTP.request(
+        "POST",
+        `${API_ROOT}/models/${encodeURIComponent(model)}:generateContent`,
+        {
+          body: JSON.stringify({
+            ...(systemText ? { systemInstruction: { parts: [{ text: systemText }] } } : {}),
+            contents,
+            generationConfig,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          responseType: "json",
+          timeout: this.config.timeoutMs,
         },
-        responseType: "json",
-        timeout: this.config.timeoutMs,
-      },
-    );
+      );
+    } catch (error) {
+      throw new Error(describeGoogleError(error, model));
+    }
     if (options.signal?.aborted) throw cancellationError("Request aborted");
     const payload = typeof response.response === "string" ? JSON.parse(response.response) : response.response;
     return extractGeminiText(payload);
@@ -77,7 +82,7 @@ export class GoogleGeminiClient implements LLMClient {
       return {
         ok: false,
         models: [],
-        message: `Could not connect to Google Gemini model ${model}: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Could not connect to Google Gemini model ${model}: ${describeGoogleError(error, model)}`,
       };
     }
   }
@@ -87,6 +92,29 @@ export class GoogleGeminiClient implements LLMClient {
     if (!apiKey) throw new Error("Google AI API key is missing. Add it in Scholar Assistant settings.");
     return apiKey;
   }
+}
+
+export function describeGoogleError(error: unknown, model: string): string {
+  const value = error as any;
+  const responseText = value?.xmlhttp?.responseText
+    ?? value?.response?.responseText
+    ?? value?.responseText
+    ?? value?.response?.response;
+  let payload: any = null;
+  if (typeof responseText === "string" && responseText.trim()) {
+    try { payload = JSON.parse(responseText); } catch { /* use the original error below */ }
+  } else if (responseText && typeof responseText === "object") {
+    payload = responseText;
+  }
+  const status = Number(value?.status ?? value?.xmlhttp?.status ?? value?.response?.status ?? payload?.error?.code ?? 0);
+  const detail = String(payload?.error?.message ?? value?.message ?? error);
+  if (status === 429 || /quota|resource_exhausted|too many requests/i.test(detail)) {
+    const alternative = model === "gemini-3.5-flash-lite"
+      ? "Wait for the quota to reset or enable billing in Google AI Studio."
+      : "Switch the Gemini model to gemini-3.5-flash-lite, wait for the quota to reset, or enable billing in Google AI Studio.";
+    return `Google Gemini quota is exhausted for ${model}. ${alternative}`;
+  }
+  return detail || `Google Gemini request failed${status ? ` with HTTP ${status}` : ""}.`;
 }
 
 export function extractGeminiText(payload: any): string {
