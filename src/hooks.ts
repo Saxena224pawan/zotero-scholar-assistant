@@ -97,8 +97,9 @@ export class Hooks {
         menuItem.setAttribute("label", `Processing Papers… ${completed}/${progress.total}`);
       });
       win.alert("Scholar Assistant processing has started. Papers are processed sequentially; Zotero will notify you when it finishes.");
-      this.dashboard.open(win);
-      await this.dashboard.start(selection.papers, selection.collectionName);
+      const run = this.dashboard.start(selection.papers, selection.collectionName);
+      this.dashboard.open(win, selection);
+      await run;
       const result = latest as PipelineProgress | null;
       const failures = result?.jobs
         .filter((job) => job.status === "failed")

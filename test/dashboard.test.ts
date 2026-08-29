@@ -29,6 +29,7 @@ function loadDashboard() {
     "scholar-assistant-paper-rows", "scholar-assistant-failures", "scholar-assistant-failure-list",
     "scholar-assistant-progress", "scholar-assistant-overall-status", "scholar-assistant-current-stage",
     "scholar-assistant-progress-label", "scholar-assistant-start", "scholar-assistant-pause", "scholar-assistant-stop",
+    "scholar-assistant-file", "scholar-assistant-collection",
   ].forEach((id) => ids.set(id, new FakeElement()));
   const document = {
     getElementById(id: string) { return ids.get(id); },
@@ -41,6 +42,22 @@ function loadDashboard() {
   );
   return { dashboard: window.ScholarAssistantDashboard, ids };
 }
+
+test("a menu-selected CSV is loaded into the dashboard", () => {
+  const { dashboard, ids } = loadDashboard();
+  const papers = [
+    { row: 2, title: "First paper" },
+    { row: 3, title: "Second paper" },
+  ];
+
+  dashboard.loadSelection({ path: "C:\\papers\\abc.csv", papers, collectionName: "abc" });
+
+  assert.equal(dashboard.papers.length, 2);
+  assert.equal(ids.get("scholar-assistant-file")!.value, "C:\\papers\\abc.csv");
+  assert.equal(ids.get("scholar-assistant-collection")!.value, "abc");
+  assert.equal(ids.get("scholar-assistant-start")!.disabled, false);
+  assert.equal(ids.get("scholar-assistant-paper-rows")!.children.length, 2);
+});
 
 test("147-paper progress updates reuse dashboard rows", () => {
   const { dashboard, ids } = loadDashboard();

@@ -31,7 +31,7 @@ await build({
   legalComments: "none",
 });
 
-const xpiPath = path.join(buildDir, "zotero-scholar-assistant-1.3.3.xpi");
+const xpiPath = path.join(buildDir, "zotero-scholar-assistant-1.3.4.xpi");
 await new Promise((resolve, reject) => {
   const output = createWriteStream(xpiPath);
   const archive = archiver("zip", { zlib: { level: 9 } });

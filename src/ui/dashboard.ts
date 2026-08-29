@@ -5,27 +5,46 @@ import { PipelineOrchestrator } from "../pipeline/orchestrator";
 import { getLLMConfig } from "../utils/prefs";
 import { logger } from "../utils/logger";
 
+export interface DashboardSelection {
+  path: string;
+  papers: PaperRecord[];
+  collectionName: string;
+}
+
 export class DashboardController {
   private dialog: Window | null = null;
+  private preparedSelection: DashboardSelection | null = null;
 
   constructor(private readonly rootURI: string, private readonly orchestrator: PipelineOrchestrator) {
     orchestrator.subscribe((progress) => this.notify(progress));
   }
 
-  open(parent: Window): void {
+  open(parent: Window, selection?: DashboardSelection): void {
+    if (selection) this.preparedSelection = selection;
     if (this.dialog && !this.dialog.closed) {
+      const dashboard = (this.dialog as any).ScholarAssistantDashboard;
+      if (selection && typeof dashboard?.loadSelection === "function") {
+        dashboard.loadSelection(selection);
+        this.preparedSelection = null;
+      }
       this.dialog.focus();
       return;
     }
     this.dialog = parent.openDialog(
       "chrome://scholar-assistant/content/dashboard.xhtml",
       "scholar-assistant-dashboard",
-      "chrome,centerscreen,resizable,width=980,height=680",
+      "chrome,dialog=no,dependent=no,centerscreen,resizable,width=980,height=680",
       this,
     );
   }
 
-  async chooseCSV(parent?: Window): Promise<{ path: string; papers: PaperRecord[]; collectionName: string } | null> {
+  consumePreparedSelection(): DashboardSelection | null {
+    const selection = this.preparedSelection;
+    this.preparedSelection = null;
+    return selection;
+  }
+
+  async chooseCSV(parent?: Window): Promise<DashboardSelection | null> {
     const { FilePicker } = ChromeUtils.importESModule("chrome://zotero/content/modules/filePicker.mjs");
     const picker = new FilePicker();
     picker.init(parent ?? this.dialog, "Select a paper CSV", picker.modeOpen);

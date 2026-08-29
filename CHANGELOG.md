@@ -2,6 +2,15 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.4] - 2026-08-29
+
+### Fixed
+
+- Passed a CSV selected from the Tools menu into the dashboard instead of opening an empty dashboard that requested the file again.
+- Opened the dashboard as a non-modal Zotero window so collection creation and paper processing can begin immediately.
+- Started the import pipeline before displaying the dashboard, preventing the window lifecycle from blocking processing.
+- Added regression coverage for the selected-file handoff and for importing while a dashboard is already open.
+
 ## [1.3.3] - 2026-08-29
 
 ### Fixed

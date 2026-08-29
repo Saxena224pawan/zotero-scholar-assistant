@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zotero Scholar Assistant",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Imports paper lists, retrieves open PDFs, and creates Ollama- or Google Gemini-powered highlights, study notes, and quizzes.",
   "author": "Pawan Saxena",
   "homepage_url": "https://github.com/Saxena224pawan/zotero-scholar-assistant",

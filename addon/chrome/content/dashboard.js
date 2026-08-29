@@ -16,10 +16,12 @@ var ScholarAssistantDashboard = {
       if (!this.controller) throw new Error("Dashboard controller was not provided.");
       const config = this.controller.getConfig();
       document.getElementById("scholar-assistant-model").value = `${config.provider === "google" ? "Google Gemini" : "Ollama"} · ${config.model}`;
+      const preparedSelection = this.controller.consumePreparedSelection?.();
+      if (preparedSelection) this.loadSelection(preparedSelection);
       const progress = this.controller.getProgress();
       if (progress && (progress.running || progress.total)) {
         this.renderProgress(progress);
-      } else {
+      } else if (!preparedSelection) {
         this.setLabel("No import is running. Select a CSV to begin.");
       }
       this.pollTimer = window.setInterval(() => this.refreshProgress(), 1500);
@@ -35,15 +37,21 @@ var ScholarAssistantDashboard = {
     try {
       const result = await this.controller.chooseCSV();
       if (!result) return;
-      this.papers = result.papers;
-      document.getElementById("scholar-assistant-file").value = result.path;
-      document.getElementById("scholar-assistant-collection").value = result.collectionName;
-      document.getElementById("scholar-assistant-start").disabled = false;
-      this.renderPapers();
-      this.setLabel(`${this.papers.length} papers ready.`);
+      this.loadSelection(result);
     } catch (error) {
       this.showError(error);
     }
+  },
+
+  loadSelection(result) {
+    this.papers = result.papers || [];
+    this.jobs = [];
+    this.resetRows();
+    document.getElementById("scholar-assistant-file").value = result.path || "";
+    document.getElementById("scholar-assistant-collection").value = result.collectionName || "";
+    document.getElementById("scholar-assistant-start").disabled = !this.papers.length;
+    this.renderPapers();
+    this.setLabel(`${this.papers.length} papers ready.`);
   },
 
   clear() {
