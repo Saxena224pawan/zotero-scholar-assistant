@@ -6,6 +6,6 @@ export default {
   build: {
     entry: "src/index.ts",
     output: "content/index.js",
-    xpi: "build/zotero-scholar-assistant-1.3.2.xpi",
+    xpi: "build/zotero-scholar-assistant-1.3.3.xpi",
   },
 };

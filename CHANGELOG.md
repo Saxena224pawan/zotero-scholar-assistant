@@ -2,6 +2,15 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.3] - 2026-08-29
+
+### Fixed
+
+- Replaced full dashboard table rebuilding with incremental row updates for large CSV imports.
+- Reduced recovery polling frequency while keeping event-driven status updates immediate.
+- Added the active paper number to live status messages.
+- Added a 147-paper dashboard regression test based on the reported workload.
+
 ## [1.3.2] - 2026-08-29
 
 ### Fixed

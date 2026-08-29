@@ -5,6 +5,10 @@ var ScholarAssistantDashboard = {
   paused: false,
   pollTimer: null,
   steps: ["matching", "fetching", "extracting", "ai-highlights", "ai-notes", "ai-quiz", "annotating", "notes", "quiz"],
+  rowKeys: [],
+  rowElements: [],
+  rowSignatures: [],
+  failureSignature: "",
 
   init() {
     try {
@@ -18,7 +22,7 @@ var ScholarAssistantDashboard = {
       } else {
         this.setLabel("No import is running. Select a CSV to begin.");
       }
-      this.pollTimer = window.setInterval(() => this.refreshProgress(), 500);
+      this.pollTimer = window.setInterval(() => this.refreshProgress(), 1500);
       window.addEventListener("unload", () => {
         if (this.pollTimer) window.clearInterval(this.pollTimer);
       }, { once: true });
@@ -45,6 +49,7 @@ var ScholarAssistantDashboard = {
   clear() {
     this.papers = [];
     this.jobs = [];
+    this.resetRows();
     document.getElementById("scholar-assistant-file").value = "";
     document.getElementById("scholar-assistant-collection").value = "";
     document.getElementById("scholar-assistant-start").disabled = true;
@@ -98,6 +103,7 @@ var ScholarAssistantDashboard = {
     ScholarAssistantDashboard.renderFailures(progress.jobs);
     const completed = progress.done + progress.failed;
     const active = progress.jobs.find((job) => !["pending", "done", "failed", "stopped"].includes(job.status));
+    const activeIndex = active ? progress.jobs.indexOf(active) : -1;
     const bar = document.getElementById("scholar-assistant-progress");
     const steps = ScholarAssistantDashboard.steps;
     const totalSteps = Math.max(progress.total * steps.length, 1);
@@ -115,7 +121,7 @@ var ScholarAssistantDashboard = {
       ? `${completed}/${progress.total} complete`
       : `Finished: ${progress.done} completed, ${progress.failed} failed`;
     stage.textContent = active
-      ? `${active.paper.title || active.paper.doi || `Row ${active.paper.row}`}: ${active.message || active.status}`
+      ? `Paper ${activeIndex + 1} of ${progress.total} · ${active.paper.title || active.paper.doi || `Row ${active.paper.row}`}: ${active.message || active.status}`
       : progress.paused ? "Processing is paused." : progress.total ? "No paper is currently active." : "No import is running.";
     ScholarAssistantDashboard.setLabel(`${completed}/${progress.total} complete · ${progress.failed} failed${progress.paused ? " · paused" : ""}`);
     ScholarAssistantDashboard.setRunning(progress.running);
@@ -123,29 +129,65 @@ var ScholarAssistantDashboard = {
 
   renderPapers() {
     const body = document.getElementById("scholar-assistant-paper-rows");
-    body.replaceChildren();
     const rows = this.jobs.length ? this.jobs : this.papers.map((paper) => ({ paper, status: "pending", message: "Waiting" }));
+    const keys = rows.map((job, index) => job.id || `paper-${job.paper.row}-${index}`);
+    const structureChanged = keys.length !== this.rowKeys.length || keys.some((key, index) => key !== this.rowKeys[index]);
+    if (structureChanged) {
+      body.replaceChildren();
+      this.rowKeys = keys;
+      this.rowElements = [];
+      this.rowSignatures = [];
+      rows.forEach((job, index) => {
+        const row = this.createPaperRow(job, index);
+        this.rowElements.push(row);
+        body.append(row.tr);
+      });
+    }
     rows.forEach((job, index) => {
-      const paper = job.paper;
-      const tr = document.createElementNS("http://www.w3.org/1999/xhtml", "tr");
-      [String(index + 1), paper.title || paper.doi || paper.arxivId || paper.url || "Untitled"].forEach((value) => {
-        const td = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
-        td.textContent = value;
-        tr.append(td);
-      });
-      ScholarAssistantDashboard.steps.forEach((step) => {
-        const td = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
-        const state = this.stepState(job.status, step, job.failedAt);
-        td.className = `scholar-assistant-step ${state}`;
-        td.textContent = state === "complete" ? "✓" : state === "active" ? "●" : state === "failed" ? "✕" : "—";
-        td.title = `${step}: ${state}`;
-        tr.append(td);
-      });
-      const status = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
-      status.textContent = job.message || job.status || "Waiting";
-      tr.append(status);
-      body.append(tr);
+      const signature = `${job.status}|${job.failedAt || ""}|${job.message || ""}`;
+      if (this.rowSignatures[index] === signature) return;
+      this.rowSignatures[index] = signature;
+      this.updatePaperRow(this.rowElements[index], job);
     });
+  },
+
+  createPaperRow(job, index) {
+    const paper = job.paper;
+    const tr = document.createElementNS("http://www.w3.org/1999/xhtml", "tr");
+    [String(index + 1), paper.title || paper.doi || paper.arxivId || paper.url || "Untitled"].forEach((value) => {
+      const td = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
+      td.textContent = value;
+      tr.append(td);
+    });
+    const stepCells = {};
+    ScholarAssistantDashboard.steps.forEach((step) => {
+      const td = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
+      stepCells[step] = td;
+      tr.append(td);
+    });
+    const status = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
+    tr.append(status);
+    return { tr, stepCells, status };
+  },
+
+  updatePaperRow(row, job) {
+    if (!row) return;
+    ScholarAssistantDashboard.steps.forEach((step) => {
+      const state = ScholarAssistantDashboard.stepState(job.status, step, job.failedAt);
+      const cell = row.stepCells[step];
+      cell.className = `scholar-assistant-step ${state}`;
+      cell.textContent = state === "complete" ? "✓" : state === "active" ? "●" : state === "failed" ? "✕" : "—";
+      cell.title = `${ScholarAssistantDashboard.stageLabel(step)}: ${state}`;
+    });
+    row.status.textContent = job.message || job.status || "Waiting";
+  },
+
+  resetRows() {
+    this.rowKeys = [];
+    this.rowElements = [];
+    this.rowSignatures = [];
+    this.failureSignature = "";
+    document.getElementById("scholar-assistant-paper-rows")?.replaceChildren();
   },
 
   stepState(status, step, failedAt) {
@@ -169,6 +211,9 @@ var ScholarAssistantDashboard = {
     const list = document.getElementById("scholar-assistant-failure-list");
     const failures = jobs.filter((job) => job.status === "failed");
     panel.hidden = failures.length === 0;
+    const signature = failures.map((job) => `${job.id}|${job.failedAt}|${job.message}`).join("\n");
+    if (signature === this.failureSignature) return;
+    this.failureSignature = signature;
     list.replaceChildren();
     failures.forEach((job) => {
       const entry = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
