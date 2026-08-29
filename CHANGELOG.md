@@ -2,6 +2,13 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.2] - 2026-08-29
+
+### Fixed
+
+- Restored the HTTPS `applications.zotero.update_url` required for installation on current Zotero versions.
+- Added a repository-hosted update manifest and manifest regression tests.
+
 ## [1.3.1] - 2026-08-29
 
 ### Fixed
