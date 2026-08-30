@@ -20,3 +20,13 @@ test("update manifest contains the add-on ID", () => {
   assert.ok(updates.addons?.[id]);
   assert.ok(Array.isArray(updates.addons[id].updates));
 });
+
+test("release automation builds and publishes a versioned XPI", () => {
+  const workflow = readFileSync(new URL("../.github/workflows/release.yml", import.meta.url), "utf8");
+  const buildScript = readFileSync(new URL("../scripts/build.mjs", import.meta.url), "utf8");
+  assert.match(workflow, /tags:\s*\n\s*- ["']v\*["']/);
+  assert.match(workflow, /gh release (?:create|upload)/);
+  assert.match(workflow, /write-update-manifest\.mjs/);
+  assert.match(buildScript, /packageJSON\.version/);
+  assert.doesNotMatch(buildScript, /zotero-scholar-assistant-\d+\.\d+\.\d+\.xpi/);
+});

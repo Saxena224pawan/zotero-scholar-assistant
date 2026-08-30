@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          test "${GITHUB_REF_NAME}" = "v${VERSION}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and test
+        run: npm run build
+
+      - name: Locate release package
+        id: package
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          XPI="build/zotero-scholar-assistant-${VERSION}.xpi"
+          test -f "${XPI}"
+          echo "xpi=${XPI}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zotero-scholar-assistant-${{ github.ref_name }}
+          path: ${{ steps.package.outputs.xpi }}
+          if-no-files-found: error
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          XPI: ${{ steps.package.outputs.xpi }}
+        shell: bash
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "${XPI}" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" "${XPI}" \
+              --verify-tag \
+              --title "Zotero Scholar Assistant ${GITHUB_REF_NAME#v}" \
+              --generate-notes
+          fi
+
+      - name: Generate Zotero update manifest
+        env:
+          XPI: ${{ steps.package.outputs.xpi }}
+        run: node scripts/write-update-manifest.mjs --xpi "${XPI}" --tag "${GITHUB_REF_NAME}"
+
+      - name: Publish Zotero update manifest to main
+        shell: bash
+        run: |
+          cp updates.json "${RUNNER_TEMP}/updates.json"
+          git switch --force-create main origin/main
+          cp "${RUNNER_TEMP}/updates.json" updates.json
+          if git diff --quiet -- updates.json; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates.json
+          git commit -m "Update Zotero manifest for ${GITHUB_REF_NAME}"
+          git push origin main

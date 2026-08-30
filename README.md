@@ -62,6 +62,19 @@ npm run build
 
 The XPI is written to `build/`. The build command also runs TypeScript validation and the automated test suite.
 
+### Automated builds and releases
+
+Every push to `main` and every pull request is built and tested by GitHub Actions. The resulting XPI is available as a workflow artifact.
+
+To publish a GitHub Release, update the package and add-on versions, commit the changes, and push a matching tag:
+
+```powershell
+git tag v1.3.7
+git push origin v1.3.7
+```
+
+The release workflow validates the tag, builds and tests the add-on, creates the GitHub Release, attaches the versioned XPI, calculates its SHA-256 hash, and publishes the matching Zotero update entry to `updates.json` on `main`.
+
 ## Quick start
 
 1. Open **Tools → Scholar Assistant → Settings…**.

@@ -1,7 +1,7 @@
 import { build } from "esbuild";
 import archiver from "archiver";
 import { createWriteStream } from "node:fs";
-import { cp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const buildDir = path.join(root, "build");
 const addonDir = path.join(buildDir, "addon");
+const packageJSON = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
 
 if (process.argv.includes("--clean")) {
   await rm(buildDir, { recursive: true, force: true });
@@ -31,7 +32,7 @@ await build({
   legalComments: "none",
 });
 
-const xpiPath = path.join(buildDir, "zotero-scholar-assistant-1.3.7.xpi");
+const xpiPath = path.join(buildDir, `zotero-scholar-assistant-${packageJSON.version}.xpi`);
 await new Promise((resolve, reject) => {
   const output = createWriteStream(xpiPath);
   const archive = archiver("zip", { zlib: { level: 9 } });
