@@ -8,9 +8,30 @@ export async function fetchPDF(item: any, paper: PaperRecord): Promise<any | nul
     .find((attachment: any) => attachment?.attachmentContentType === "application/pdf");
   if (existing) return existing;
 
-  const candidates: string[] = [];
+  const attempted = new Set<string>();
+  const tryPDF = async (url: string | undefined): Promise<any | null> => {
+    if (!url || attempted.has(url)) return null;
+    attempted.add(url);
+    try {
+      return await Zotero.Attachments.importFromURL({
+        url,
+        parentItemID: item.id,
+        title: "Full Text PDF",
+        contentType: "application/pdf",
+      });
+    } catch (error) {
+      logger.debug(`PDF download failed: ${url}`, error);
+      return null;
+    }
+  };
+
   if (paper.arxivId && getPref(prefKeys.enableArxiv, true)) {
-    candidates.push(`https://arxiv.org/pdf/${encodeURIComponent(paper.arxivId)}.pdf`);
+    const attachment = await tryPDF(`https://arxiv.org/pdf/${encodeURIComponent(paper.arxivId)}.pdf`);
+    if (attachment) return attachment;
+  }
+  if (paper.url && getPref(prefKeys.enableDirectURL, true) && /(?:\.pdf(?:$|\?)|arxiv\.org\/pdf\/)/i.test(paper.url)) {
+    const attachment = await tryPDF(paper.url);
+    if (attachment) return attachment;
   }
   if (paper.doi && getPref(prefKeys.enableUnpaywall, true)) {
     const email = getPref(prefKeys.unpaywallEmail, "");
@@ -23,7 +44,8 @@ export async function fetchPDF(item: any, paper: PaperRecord): Promise<any | nul
         );
         const payload = typeof response.response === "string" ? JSON.parse(response.response) : response.response;
         const url = payload?.best_oa_location?.url_for_pdf;
-        if (url) candidates.push(url);
+        const attachment = await tryPDF(url);
+        if (attachment) return attachment;
       } catch (error) {
         logger.debug("Unpaywall lookup failed", error);
       }
@@ -38,25 +60,10 @@ export async function fetchPDF(item: any, paper: PaperRecord): Promise<any | nul
         { responseType: "json", timeout: 30000 },
       );
       const payload = typeof response.response === "string" ? JSON.parse(response.response) : response.response;
-      if (payload?.openAccessPdf?.url) candidates.push(payload.openAccessPdf.url);
+      const attachment = await tryPDF(payload?.openAccessPdf?.url);
+      if (attachment) return attachment;
     } catch (error) {
       logger.debug("Semantic Scholar open-PDF lookup failed", error);
-    }
-  }
-  if (paper.url && getPref(prefKeys.enableDirectURL, true) && /(?:\.pdf(?:$|\?)|arxiv\.org\/pdf\/)/i.test(paper.url)) {
-    candidates.push(paper.url);
-  }
-
-  for (const url of [...new Set(candidates)]) {
-    try {
-      return await Zotero.Attachments.importFromURL({
-        url,
-        parentItemID: item.id,
-        title: "Full Text PDF",
-        contentType: "application/pdf",
-      });
-    } catch (error) {
-      logger.debug(`PDF download failed: ${url}`, error);
     }
   }
   return null;

@@ -2,6 +2,14 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.6] - 2026-08-30
+
+### Fixed
+
+- Download known arXiv and direct PDF URLs immediately instead of waiting for fallback discovery services.
+- Query Unpaywall and Semantic Scholar only after faster deterministic PDF sources fail.
+- Reuse existing Zotero PDF attachments without making any discovery or download requests.
+
 ## [1.3.5] - 2026-08-29
 
 ### Fixed
