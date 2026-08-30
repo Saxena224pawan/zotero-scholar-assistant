@@ -110,13 +110,14 @@ var ScholarAssistantDashboard = {
     ScholarAssistantDashboard.renderPapers();
     ScholarAssistantDashboard.renderFailures(progress.jobs);
     const completed = progress.done + progress.failed;
-    const active = progress.jobs.find((job) => !["pending", "done", "failed", "stopped"].includes(job.status));
+    const active = progress.jobs.find((job) => !["pending", "deferred", "done", "failed", "stopped"].includes(job.status));
     const activeIndex = active ? progress.jobs.indexOf(active) : -1;
     const bar = document.getElementById("scholar-assistant-progress");
     const steps = ScholarAssistantDashboard.steps;
     const totalSteps = Math.max(progress.total * steps.length, 1);
     const completedSteps = progress.jobs.reduce((sum, job) => {
       if (job.status === "done") return sum + steps.length;
+      if (job.status === "deferred") return sum + 1;
       const currentStep = steps.indexOf(job.status === "failed" ? job.failedAt : job.status);
       if (currentStep < 0) return sum;
       return sum + currentStep + (job.status === "failed" ? 1 : 0.5);
@@ -202,6 +203,7 @@ var ScholarAssistantDashboard = {
     const order = ScholarAssistantDashboard.steps.concat("done");
     if (status === "done") return "complete";
     if (status === "pending" || status === "stopped") return "pending";
+    if (status === "deferred") return step === "matching" ? "complete" : "pending";
     const current = order.indexOf(status === "failed" ? failedAt : status);
     const target = order.indexOf(step);
     if (status === "failed") {

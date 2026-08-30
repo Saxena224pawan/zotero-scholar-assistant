@@ -68,6 +68,13 @@ test("a preflight failure remains visible in the dashboard", () => {
   assert.match(ids.get("scholar-assistant-progress-label")!.value, /quota is exhausted/);
 });
 
+test("a deferred PDF row shows completed metadata and remains queued", () => {
+  const { dashboard } = loadDashboard();
+  assert.equal(dashboard.stepState("deferred", "matching"), "complete");
+  assert.equal(dashboard.stepState("deferred", "fetching"), "pending");
+  assert.equal(dashboard.stepState("deferred", "ai-highlights"), "pending");
+});
+
 test("147-paper progress updates reuse dashboard rows", () => {
   const { dashboard, ids } = loadDashboard();
   const papers = Array.from({ length: 147 }, (_, index) => ({ row: index + 2, title: `Paper ${index + 1}` }));

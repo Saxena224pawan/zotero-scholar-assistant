@@ -56,7 +56,7 @@ function renderStatus(body: HTMLElement, selectedItem: any, progress: PipelinePr
       ? `Last import: ${progress.done} complete, ${progress.failed} failed.`
       : "No Scholar Assistant import has started in this Zotero session.", true);
 
-  const activeJob = progress.jobs.find((job) => job.status !== "pending" && !["done", "failed", "stopped"].includes(job.status));
+  const activeJob = progress.jobs.find((job) => !["pending", "deferred", "done", "failed", "stopped"].includes(job.status));
   if (activeJob) {
     const paperName = activeJob.paper.title || activeJob.paper.doi || activeJob.paper.arxivId || `row ${activeJob.paper.row}`;
     appendLine(wrapper, `Current paper: ${paperName} — ${activeJob.message || activeJob.status}`);

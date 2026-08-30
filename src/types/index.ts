@@ -60,6 +60,7 @@ export type JobStatus =
   | "annotating"
   | "notes"
   | "quiz"
+  | "deferred"
   | "done"
   | "failed"
   | "stopped";
@@ -72,6 +73,7 @@ export interface PaperJob {
   message?: string;
   itemID?: number;
   attachmentID?: number;
+  pdfAttempts?: number;
 }
 
 export interface PageText {

@@ -152,6 +152,8 @@ Each paper is processed sequentially. The dashboard displays these stages indepe
 
 A failed stage is shown explicitly with its error. Later stages remain pending, so it is clear where processing stopped.
 
+PDF discovery has a 10-minute limit per attempt. When the first attempt times out, the dashboard marks the paper as deferred and immediately continues with the next row. After the initial pass, each deferred paper is retried once. A second timeout is recorded as a PDF-stage failure.
+
 ## Generated output
 
 ### Highlights
@@ -231,7 +233,7 @@ Check the dashboard failure message. The add-on intentionally refuses malformed 
 
 ### Dashboard or item panel is empty
 
-Confirm version 1.3.6 or newer is installed and completely restart Zotero after replacing the XPI. Open **Tools → Scholar Assistant → Open Dashboard…**. The dashboard includes a dedicated failure panel showing the CSV row, exact pipeline stage, and complete error. Preflight failures such as exhausted Google quota remain visible in the status strip. Select either the bibliographic item or its PDF attachment to view the Scholar Assistant item-pane section.
+Confirm version 1.3.7 or newer is installed and completely restart Zotero after replacing the XPI. Open **Tools → Scholar Assistant → Open Dashboard…**. The dashboard includes a dedicated failure panel showing the CSV row, exact pipeline stage, and complete error. Preflight failures such as exhausted Google quota remain visible in the status strip. Select either the bibliographic item or its PDF attachment to view the Scholar Assistant item-pane section.
 
 ## Development
 

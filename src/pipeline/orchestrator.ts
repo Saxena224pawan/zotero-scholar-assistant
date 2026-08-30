@@ -2,7 +2,7 @@ import type { CancellationSignal, LLMConfig, PaperJob, PaperRecord, PipelineProg
 import { getLLMConfig } from "../utils/prefs";
 import { logger } from "../utils/logger";
 import { resolveMetadata } from "./metadataResolver";
-import { fetchPDF } from "./pdfFetcher";
+import { fetchPDF, PDFLookupTimeoutError } from "./pdfFetcher";
 import { extractPDFText } from "./pdfTextExtractor";
 import { analyzePaper } from "./llmAnalyzer";
 import { writeAnnotations } from "./annotationWriter";
@@ -45,7 +45,7 @@ export class PipelineOrchestrator {
     this.paused = false;
     if (this.cancellationSignal) this.cancellationSignal.aborted = true;
     for (const job of this.jobs) {
-      if (job.status === "pending") job.status = "stopped";
+      if (job.status === "pending" || job.status === "deferred") job.status = "stopped";
     }
     this.emit();
   }
@@ -65,6 +65,7 @@ export class PipelineOrchestrator {
       collection.libraryID = libraryID;
       collection.name = collectionName || `Imported Papers - ${new Date().toISOString().slice(0, 10)}`;
       const collectionID = await collection.saveTx();
+      const deferred: PaperJob[] = [];
 
       for (const job of this.jobs) {
         if (this.stopped) break;
@@ -72,17 +73,24 @@ export class PipelineOrchestrator {
         try {
           await this.processJob(job, libraryID, collectionID, llmConfig);
         } catch (error) {
-          const failedAt = job.status;
-          if (this.stopped || (error instanceof Error && error.name === "AbortError")) {
-            job.status = "stopped";
-            job.message = "Stopped by user";
+          if (error instanceof PDFLookupTimeoutError && !this.stopped) {
+            job.status = "deferred";
+            job.message = `${error.message} Queued for one retry after the first pass.`;
+            deferred.push(job);
+            this.emit();
           } else {
-            job.status = "failed";
-            job.failedAt = failedAt;
-            job.message = error instanceof Error ? error.message : String(error);
-            logger.error(`Row ${job.paper.row} failed`, error);
+            this.failJob(job, error);
           }
-          this.emit();
+        }
+      }
+
+      for (const job of deferred) {
+        if (this.stopped) break;
+        await this.waitWhilePaused();
+        try {
+          await this.processJob(job, libraryID, collectionID, llmConfig, true);
+        } catch (error) {
+          this.failJob(job, error);
         }
       }
     } finally {
@@ -93,12 +101,19 @@ export class PipelineOrchestrator {
     }
   }
 
-  private async processJob(job: PaperJob, libraryID: number, collectionID: number, llmConfig: LLMConfig): Promise<void> {
-    this.setStatus(job, "matching", "Resolving metadata");
+  private async processJob(
+    job: PaperJob,
+    libraryID: number,
+    collectionID: number,
+    llmConfig: LLMConfig,
+    pdfRetry = false,
+  ): Promise<void> {
+    this.setStatus(job, "matching", pdfRetry ? "Retry pass: resolving metadata" : "Resolving metadata");
     const item = await resolveMetadata(job.paper, libraryID, collectionID);
     job.itemID = item.id;
 
-    this.setStatus(job, "fetching", "Finding an open PDF");
+    job.pdfAttempts = pdfRetry ? 2 : 1;
+    this.setStatus(job, "fetching", pdfRetry ? "Retrying PDF lookup (attempt 2 of 2)" : "Finding an open PDF (10-minute limit)");
     const attachment = await fetchPDF(item, job.paper);
     if (!attachment) throw new Error("No accessible PDF was found. Add a PDF to the item and retry.");
     job.attachmentID = attachment.id;
@@ -128,6 +143,20 @@ export class PipelineOrchestrator {
     this.setStatus(job, "done", `Complete — ${annotationCount} highlights, study note, ${analysis.quiz.length} quiz questions`);
   }
 
+  private failJob(job: PaperJob, error: unknown): void {
+    const failedAt = job.status === "deferred" ? "fetching" : job.status;
+    if (this.stopped || (error instanceof Error && error.name === "AbortError")) {
+      job.status = "stopped";
+      job.message = "Stopped by user";
+    } else {
+      job.status = "failed";
+      job.failedAt = failedAt;
+      job.message = error instanceof Error ? error.message : String(error);
+      logger.error(`Row ${job.paper.row} failed`, error);
+    }
+    this.emit();
+  }
+
   private async waitWhilePaused(): Promise<void> {
     while (this.paused && !this.stopped) {
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -143,7 +172,7 @@ export class PipelineOrchestrator {
   private snapshot(): PipelineProgress {
     const done = this.jobs.filter((job) => job.status === "done").length;
     const failed = this.jobs.filter((job) => job.status === "failed").length;
-    const current = this.jobs.findIndex((job) => !["done", "failed", "stopped", "pending"].includes(job.status));
+    const current = this.jobs.findIndex((job) => !["done", "failed", "stopped", "pending", "deferred"].includes(job.status));
     return {
       jobs: this.jobs.map((job) => ({ ...job, paper: { ...job.paper } })),
       current: current < 0 ? done + failed : current,

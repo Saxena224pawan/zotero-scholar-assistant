@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fetchPDF } from "../src/pipeline/pdfFetcher";
+import { fetchPDF, PDFLookupTimeoutError } from "../src/pipeline/pdfFetcher";
 
 test("downloads a known arXiv PDF before querying fallback services", async () => {
   const imported: string[] = [];
@@ -55,4 +55,21 @@ test("uses an existing Zotero PDF without making network requests", async () => 
 
   assert.equal(result, attachment);
   assert.equal(networkCalls, 0);
+});
+
+test("aborts a PDF lookup when its overall time limit expires", async () => {
+  (globalThis as any).Zotero = {
+    Prefs: { get(key: string) { return key.endsWith("enableArxiv") ? true : undefined; } },
+    Items: { get() { return null; } },
+    Attachments: { importFromURL() { return new Promise(() => undefined); } },
+  };
+
+  await assert.rejects(
+    fetchPDF(
+      { id: 42, getAttachments() { return []; } },
+      { row: 2, arxivId: "2304.08818v2" },
+      20,
+    ),
+    (error: unknown) => error instanceof PDFLookupTimeoutError && error.timeoutMs === 20,
+  );
 });

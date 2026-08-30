@@ -2,6 +2,15 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.7] - 2026-08-30
+
+### Added
+
+- Apply a 10-minute overall timeout to each PDF lookup attempt.
+- Defer timed-out papers while the remaining first-pass papers continue.
+- Retry deferred papers once after the first pass and report a second timeout as a PDF-stage failure.
+- Display deferred retry status and partial PDF-stage progress in the dashboard.
+
 ## [1.3.6] - 2026-08-30
 
 ### Fixed
