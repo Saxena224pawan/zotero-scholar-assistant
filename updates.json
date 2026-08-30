@@ -1,7 +1,19 @@
 {
   "addons": {
     "scholar-assistant@zotero-plugin.local": {
-      "updates": []
+      "updates": [
+        {
+          "version": "1.3.7",
+          "update_link": "https://github.com/Saxena224pawan/zotero-scholar-assistant/releases/download/v1.3.7/zotero-scholar-assistant-1.3.7.xpi",
+          "update_hash": "sha256:27c1a18d164c357a8617f1c00ba65a75323a6347517d405d4a519d5fbcc3307e",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "10.0",
+              "strict_max_version": "10.0.*"
+            }
+          }
+        }
+      ]
     }
   }
 }
