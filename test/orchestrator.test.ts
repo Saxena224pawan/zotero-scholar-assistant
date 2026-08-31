@@ -130,3 +130,26 @@ test("a second PDF timeout becomes a visible PDF-stage failure", async () => {
   assert.equal(job.failedAt, "fetching");
   assert.match(job.message ?? "", /timed out after 10 minutes/i);
 });
+
+test("selected-item processing analyzes the existing item and PDF without creating a collection", async () => {
+  (globalThis as any).Zotero = { logError() {} };
+  const orchestrator = new PipelineOrchestrator();
+  const paper = { row: 1, title: "Selected paper" };
+  const item = { id: 10 };
+  const attachment = { id: 20 };
+  let received: any[] | null = null;
+  (orchestrator as any).analyzeAttachment = async (job: any, receivedItem: any, receivedAttachment: any) => {
+    received = [receivedItem, receivedAttachment];
+    job.status = "done";
+    job.message = "Complete";
+  };
+
+  await orchestrator.runSelectedItem(paper, item, attachment, {} as any);
+
+  assert.deepEqual(received, [item, attachment]);
+  const progress = orchestrator.getProgress();
+  assert.equal(progress.total, 1);
+  assert.equal(progress.done, 1);
+  assert.equal(progress.jobs[0]?.itemID, 10);
+  assert.equal(progress.jobs[0]?.attachmentID, 20);
+});

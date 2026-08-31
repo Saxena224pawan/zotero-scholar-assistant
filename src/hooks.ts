@@ -3,7 +3,7 @@ import { registerProgressPanel, unregisterProgressPanel } from "./ui/progressPan
 import { registerSettingsPane } from "./ui/settingsPane";
 import { PipelineOrchestrator } from "./pipeline/orchestrator";
 import { logger } from "./utils/logger";
-import type { PipelineProgress } from "./types";
+import type { PaperRecord, PipelineProgress } from "./types";
 
 const PLUGIN_ID = "scholar-assistant@zotero-plugin.local";
 
@@ -30,42 +30,57 @@ export class Hooks {
   }
 
   onMainWindowLoad(win: Window): void {
-    if (win.document.getElementById("scholar-assistant-menu")) return;
     win.MozXULElement?.insertFTLIfNeeded?.("scholar-assistant.ftl");
-    const popup = win.document.getElementById("menu_ToolsPopup")
-      ?? win.document.getElementById("menu_toolsPopup");
-    if (!popup) {
-      logger.debug("Tools menu was not found in this window");
-      return;
+    if (!win.document.getElementById("scholar-assistant-menu")) {
+      const popup = win.document.getElementById("menu_ToolsPopup")
+        ?? win.document.getElementById("menu_toolsPopup");
+      if (!popup) {
+        logger.debug("Tools menu was not found in this window");
+      } else {
+        const menu = win.document.createXULElement("menu");
+        menu.id = "scholar-assistant-menu";
+        menu.setAttribute("label", "Scholar Assistant");
+        const submenu = win.document.createXULElement("menupopup");
+        const importItem = win.document.createXULElement("menuitem");
+        importItem.id = "scholar-assistant-import";
+        importItem.setAttribute("label", "Import Papers…");
+        importItem.addEventListener("command", () => void this.importPapers(win, importItem));
+        const selectedItem = win.document.createXULElement("menuitem");
+        selectedItem.id = "scholar-assistant-process-selected";
+        selectedItem.setAttribute("label", "Process Selected Paper…");
+        selectedItem.addEventListener("command", () => void this.processSelectedPaper(win, selectedItem));
+        const dashboardItem = win.document.createXULElement("menuitem");
+        dashboardItem.setAttribute("label", "Open Dashboard…");
+        dashboardItem.addEventListener("command", () => this.dashboard.open(win));
+        const testItem = win.document.createXULElement("menuitem");
+        testItem.setAttribute("label", "Test AI Connection");
+        testItem.addEventListener("command", () => void this.testAI(win));
+        const settingsItem = win.document.createXULElement("menuitem");
+        settingsItem.setAttribute("label", "Settings…");
+        settingsItem.addEventListener("command", () => {
+          const openPreferences = (Zotero.Utilities.Internal as any).openPreferences;
+          if (typeof openPreferences === "function") openPreferences("zotero-prefpane-scholar-assistant");
+          else win.alert("Open Zotero Settings and select Scholar Assistant.");
+        });
+        submenu.append(importItem, selectedItem, dashboardItem, testItem, settingsItem);
+        menu.append(submenu);
+        popup.append(menu);
+      }
     }
-    const menu = win.document.createXULElement("menu");
-    menu.id = "scholar-assistant-menu";
-    menu.setAttribute("label", "Scholar Assistant");
-    const submenu = win.document.createXULElement("menupopup");
-    const importItem = win.document.createXULElement("menuitem");
-    importItem.id = "scholar-assistant-import";
-    importItem.setAttribute("label", "Import Papers…");
-    importItem.addEventListener("command", () => void this.importPapers(win, importItem));
-    const dashboardItem = win.document.createXULElement("menuitem");
-    dashboardItem.setAttribute("label", "Open Dashboard…");
-    dashboardItem.addEventListener("command", () => this.dashboard.open(win));
-    const testItem = win.document.createXULElement("menuitem");
-    testItem.setAttribute("label", "Test AI Connection");
-    testItem.addEventListener("command", () => void this.testAI(win));
-    const settingsItem = win.document.createXULElement("menuitem");
-    settingsItem.setAttribute("label", "Settings…");
-    settingsItem.addEventListener("command", () => {
-      const openPreferences = (Zotero.Utilities.Internal as any).openPreferences;
-      if (typeof openPreferences === "function") openPreferences("zotero-prefpane-scholar-assistant");
-      else win.alert("Open Zotero Settings and select Scholar Assistant.");
-    });
-    submenu.append(importItem, dashboardItem, testItem, settingsItem);
-    menu.append(submenu);
-    popup.append(menu);
+
+    const itemMenu = win.document.getElementById("zotero-itemmenu");
+    if (itemMenu && !win.document.getElementById("scholar-assistant-process-selected-context")) {
+      const selectedItem = win.document.createXULElement("menuitem");
+      selectedItem.id = "scholar-assistant-process-selected-context";
+      selectedItem.setAttribute("label", "Scholar Assistant: Process PDF");
+      selectedItem.addEventListener("command", () => void this.processSelectedPaper(win, selectedItem));
+      itemMenu.append(selectedItem);
+    }
   }
 
   onMainWindowUnload(win: Window): void {
     win.document.getElementById("scholar-assistant-menu")?.remove();
+    win.document.getElementById("scholar-assistant-process-selected-context")?.remove();
   }
 
   async shutdown(): Promise<void> {
@@ -122,6 +137,55 @@ export class Hooks {
     }
   }
 
+  private async processSelectedPaper(win: Window, menuItem: Element): Promise<void> {
+    let latest: PipelineProgress | null = null;
+    let unsubscribe: (() => void) | null = null;
+    const originalLabel = menuItem.getAttribute("label") || "Process Selected Paper…";
+    try {
+      const selectedItems = (win as any).ZoteroPane?.getSelectedItems?.() ?? [];
+      const { item, attachment } = resolveSelectedPDF(selectedItems);
+      const paper = paperRecordFromItem(item);
+      const config = this.dashboard.getConfig();
+      const providerName = config.provider === "google" ? "Google Gemini" : "Ollama";
+      const confirmed = win.confirm(
+        `Process “${paper.title}” using its existing PDF attachment?\n\nAI provider: ${providerName}\nModel: ${config.model}\n\nScholar Assistant will add AI highlights, a study-note summary, and a quiz to this Zotero item. Existing output will not be removed.`,
+      );
+      if (!confirmed) return;
+
+      menuItem.setAttribute("disabled", "true");
+      unsubscribe = this.orchestrator.subscribe((progress) => {
+        latest = progress;
+        const completed = progress.done + progress.failed;
+        menuItem.setAttribute("label", `Processing Selected Paper… ${completed}/${progress.total}`);
+      });
+      const selection = {
+        path: attachmentDisplayName(attachment),
+        papers: [paper],
+        collectionName: "Existing Zotero item (no new collection)",
+        autoStarted: true,
+      };
+      const run = this.dashboard.startSelectedItem(paper, item, attachment);
+      this.dashboard.open(win, selection);
+      await run;
+
+      const result = latest as PipelineProgress | null;
+      const failedJob = result?.jobs.find((job) => job.status === "failed");
+      win.alert(
+        failedJob
+          ? `Scholar Assistant could not process the selected paper.\n\nFailed at ${formatStage(failedJob.failedAt)}:\n${failedJob.message || "Unknown error"}`
+          : "Scholar Assistant finished processing the selected paper.\n\nThe highlights were added to its PDF, and the study note and quiz were added under the Zotero item.",
+      );
+    } catch (error) {
+      logger.error("Selected-paper processing failed", error);
+      this.dashboard.reportError(error);
+      win.alert(`Scholar Assistant could not process the selected paper:\n\n${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      unsubscribe?.();
+      menuItem.removeAttribute("disabled");
+      menuItem.setAttribute("label", originalLabel);
+    }
+  }
+
   private async testAI(win: Window): Promise<void> {
     try {
       const config = this.dashboard.getConfig();
@@ -133,6 +197,60 @@ export class Hooks {
       win.alert(`Scholar Assistant — AI connection test\n\nFAILED\n${error instanceof Error ? error.message : String(error)}`);
     }
   }
+}
+
+export function resolveSelectedPDF(
+  selectedItems: any[],
+  getItem: (id: number) => any = (id) => Zotero.Items.get(id),
+): { item: any; attachment: any } {
+  if (selectedItems.length !== 1) {
+    throw new Error("Select exactly one Zotero paper item or one of its PDF attachments.");
+  }
+
+  const selected = selectedItems[0];
+  if (selected?.isAttachment?.()) {
+    if (!isPDFAttachment(selected)) throw new Error("The selected attachment is not a PDF.");
+    const item = selected.parentID ? getItem(selected.parentID) : null;
+    if (!item?.isRegularItem?.()) {
+      throw new Error("The selected PDF must be attached to a bibliographic Zotero item.");
+    }
+    return { item, attachment: selected };
+  }
+
+  if (!selected?.isRegularItem?.()) {
+    throw new Error("Select a bibliographic Zotero item that has a PDF attachment.");
+  }
+  const attachment = (selected.getAttachments?.() ?? [])
+    .map((id: number) => getItem(id))
+    .find((candidate: any) => isPDFAttachment(candidate));
+  if (!attachment) throw new Error("The selected Zotero item has no PDF attachment.");
+  return { item: selected, attachment };
+}
+
+export function paperRecordFromItem(item: any): PaperRecord {
+  const title = String(item.getField?.("title") || item.getDisplayTitle?.() || "Selected Zotero paper").trim();
+  const doi = String(item.getField?.("DOI") || "").trim();
+  const url = String(item.getField?.("url") || "").trim();
+  const date = String(item.getField?.("date") || "").trim();
+  const year = date.match(/\b(?:19|20)\d{2}\b/)?.[0];
+  return {
+    row: 1,
+    title,
+    doi: doi || undefined,
+    url: url || undefined,
+    year,
+  };
+}
+
+function isPDFAttachment(item: any): boolean {
+  if (!item?.isAttachment?.()) return false;
+  const contentType = String(item.attachmentContentType || "").toLowerCase();
+  const fileName = String(item.getFilename?.() || "");
+  return contentType === "application/pdf" || /\.pdf$/i.test(fileName);
+}
+
+function attachmentDisplayName(attachment: any): string {
+  return String(attachment.getFilename?.() || attachment.getField?.("title") || "Selected Zotero PDF");
 }
 
 function formatStage(stage: string | undefined): string {

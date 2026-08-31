@@ -9,6 +9,7 @@ export interface DashboardSelection {
   path: string;
   papers: PaperRecord[];
   collectionName: string;
+  autoStarted?: boolean;
 }
 
 export class DashboardController {
@@ -63,6 +64,13 @@ export class DashboardController {
     const connection = await createLLMClient(config).checkConnection();
     if (!connection.ok) throw new Error(connection.message);
     await this.orchestrator.run(papers, collectionName, config);
+  }
+
+  async startSelectedItem(paper: PaperRecord, item: any, attachment: any): Promise<void> {
+    const config = getLLMConfig();
+    const connection = await createLLMClient(config).checkConnection();
+    if (!connection.ok) throw new Error(connection.message);
+    await this.orchestrator.runSelectedItem(paper, item, attachment, config);
   }
 
   pause(): void { this.orchestrator.pause(); }

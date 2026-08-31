@@ -59,6 +59,21 @@ test("a menu-selected CSV is loaded into the dashboard", () => {
   assert.equal(ids.get("scholar-assistant-paper-rows")!.children.length, 2);
 });
 
+test("selected-item processing cannot be started a second time from the dashboard", () => {
+  const { dashboard, ids } = loadDashboard();
+  dashboard.loadSelection({
+    path: "paper.pdf",
+    papers: [{ row: 1, title: "Selected paper" }],
+    collectionName: "Existing Zotero item (no new collection)",
+    autoStarted: true,
+  });
+
+  assert.equal(ids.get("scholar-assistant-start")!.disabled, true);
+  dashboard.setRunning(false);
+  assert.equal(ids.get("scholar-assistant-start")!.disabled, true);
+  assert.equal(ids.get("scholar-assistant-paper-rows")!.children.length, 1);
+});
+
 test("a preflight failure remains visible in the dashboard", () => {
   const { dashboard, ids } = loadDashboard();
   dashboard.showError(new Error("Google Gemini quota is exhausted"));

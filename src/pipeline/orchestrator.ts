@@ -101,6 +101,42 @@ export class PipelineOrchestrator {
     }
   }
 
+  async runSelectedItem(
+    paper: PaperRecord,
+    item: any,
+    attachment: any,
+    llmConfig: LLMConfig = getLLMConfig(),
+  ): Promise<void> {
+    if (this.running) throw new Error("Scholar Assistant is already processing another paper or import.");
+    this.running = true;
+    this.paused = false;
+    this.stopped = false;
+    this.cancellationSignal = { aborted: false };
+    const job: PaperJob = {
+      id: `${Date.now()}-selected`,
+      paper,
+      status: "pending",
+      itemID: item.id,
+      attachmentID: attachment.id,
+      pdfAttempts: 0,
+    };
+    this.jobs = [job];
+    this.emit();
+
+    try {
+      this.setStatus(job, "matching", "Using the selected Zotero item");
+      this.setStatus(job, "fetching", "Using its existing PDF attachment");
+      await this.analyzeAttachment(job, item, attachment, llmConfig);
+    } catch (error) {
+      this.failJob(job, error);
+    } finally {
+      this.running = false;
+      this.paused = false;
+      this.cancellationSignal = null;
+      this.emit();
+    }
+  }
+
   private async processJob(
     job: PaperJob,
     libraryID: number,
@@ -118,6 +154,10 @@ export class PipelineOrchestrator {
     if (!attachment) throw new Error("No accessible PDF was found. Add a PDF to the item and retry.");
     job.attachmentID = attachment.id;
 
+    await this.analyzeAttachment(job, item, attachment, llmConfig);
+  }
+
+  private async analyzeAttachment(job: PaperJob, item: any, attachment: any, llmConfig: LLMConfig): Promise<void> {
     this.setStatus(job, "extracting", "Extracting indexed PDF text");
     const extracted = await extractPDFText(attachment);
 

@@ -17,6 +17,7 @@ The dashboard tracks metadata resolution, PDF retrieval, text extraction, AI gen
 ## Features
 
 - Imports one or many papers from CSV, TSV, or semicolon-delimited files.
+- Processes a selected Zotero item or PDF attachment directly, without a CSV or a new collection.
 - Resolves bibliographic metadata from DOI, arXiv ID, URL, title, authors, and year.
 - Searches supported open-access sources for PDFs.
 - Extracts indexed PDF text through Zotero.
@@ -69,8 +70,8 @@ Every push to `main` and every pull request is built and tested by GitHub Action
 To publish a GitHub Release, update the package and add-on versions, commit the changes, and push a matching tag:
 
 ```powershell
-git tag v1.3.7
-git push origin v1.3.7
+git tag v1.3.8
+git push origin v1.3.8
 ```
 
 The release workflow validates the tag, builds and tests the add-on, creates the GitHub Release, attaches the versioned XPI, calculates its SHA-256 hash, and publishes the matching Zotero update entry to `updates.json` on `main`.
@@ -86,6 +87,15 @@ The release workflow validates the tag, builds and tests the add-on, creates the
 7. Keep the dashboard open to watch each paper advance through the pipeline.
 
 Generated study and quiz notes appear as child notes under the bibliographic item. Highlights appear on the attached PDF. The Scholar Assistant item-pane section reports which outputs are available and provides buttons to open the notes.
+
+### Process an item already in Zotero
+
+1. Select exactly one bibliographic item that has a PDF attachment. You may instead select the PDF attachment itself when you want to choose a particular PDF.
+2. Choose **Tools → Scholar Assistant → Process Selected Paper…**, or right-click the selection and choose **Scholar Assistant: Process PDF**.
+3. Confirm the configured provider and model.
+4. Follow the one-paper job in the dashboard.
+
+This route uses the existing attached PDF immediately. It does not read a CSV, search the web for a PDF, change metadata, or create a new collection. The generated highlights are attached to that PDF; the study-note summary and quiz are saved as child notes under its bibliographic item.
 
 ## AI provider configuration
 
@@ -246,7 +256,7 @@ Check the dashboard failure message. The add-on intentionally refuses malformed 
 
 ### Dashboard or item panel is empty
 
-Confirm version 1.3.7 or newer is installed and completely restart Zotero after replacing the XPI. Open **Tools → Scholar Assistant → Open Dashboard…**. The dashboard includes a dedicated failure panel showing the CSV row, exact pipeline stage, and complete error. Preflight failures such as exhausted Google quota remain visible in the status strip. Select either the bibliographic item or its PDF attachment to view the Scholar Assistant item-pane section.
+Confirm version 1.3.8 or newer is installed and completely restart Zotero after replacing the XPI. Open **Tools → Scholar Assistant → Open Dashboard…**. The dashboard includes a dedicated failure panel showing the CSV row, exact pipeline stage, and complete error. Preflight failures such as exhausted Google quota remain visible in the status strip. Select either the bibliographic item or its PDF attachment to view the Scholar Assistant item-pane section.
 
 ## Development
 

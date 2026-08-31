@@ -9,6 +9,7 @@ var ScholarAssistantDashboard = {
   rowElements: [],
   rowSignatures: [],
   failureSignature: "",
+  externalRun: false,
 
   init() {
     try {
@@ -46,10 +47,11 @@ var ScholarAssistantDashboard = {
   loadSelection(result) {
     this.papers = result.papers || [];
     this.jobs = [];
+    this.externalRun = Boolean(result.autoStarted);
     this.resetRows();
     document.getElementById("scholar-assistant-file").value = result.path || "";
     document.getElementById("scholar-assistant-collection").value = result.collectionName || "";
-    document.getElementById("scholar-assistant-start").disabled = !this.papers.length;
+    document.getElementById("scholar-assistant-start").disabled = this.externalRun || !this.papers.length;
     this.renderPapers();
     this.setLabel(`${this.papers.length} papers ready.`);
   },
@@ -57,6 +59,7 @@ var ScholarAssistantDashboard = {
   clear() {
     this.papers = [];
     this.jobs = [];
+    this.externalRun = false;
     this.resetRows();
     document.getElementById("scholar-assistant-file").value = "";
     document.getElementById("scholar-assistant-collection").value = "";
@@ -253,7 +256,7 @@ var ScholarAssistantDashboard = {
   },
 
   setRunning(running) {
-    document.getElementById("scholar-assistant-start").disabled = running || !this.papers.length;
+    document.getElementById("scholar-assistant-start").disabled = running || this.externalRun || !this.papers.length;
     document.getElementById("scholar-assistant-pause").disabled = !running;
     document.getElementById("scholar-assistant-stop").disabled = !running;
   },

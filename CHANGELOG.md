@@ -2,6 +2,15 @@
 
 All notable changes to Zotero Scholar Assistant are documented here.
 
+## [1.3.8] - 2026-08-31
+
+### Added
+
+- Process a selected Zotero bibliographic item directly from the Scholar Assistant Tools submenu.
+- Process the selected item or PDF attachment from the Zotero item right-click menu.
+- Reuse the selected item's existing PDF to generate AI highlights, a structured study-note summary, and a quiz without creating a new collection or searching for another PDF.
+- Show selected-item processing as a live one-paper job in the dashboard.
+
 ## [1.3.7] - 2026-08-30
 
 ### Added
